@@ -102,7 +102,8 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"DashcamOverride", PERSISTENT},
     {"DisableLogging", CLEAR_ON_MANAGER_START | CLEAR_ON_IGNITION_ON},
     {"DisablePowerDown", PERSISTENT},
-    {"EndToEndLong", PERSISTENT},
+    {"ExperimentalMode", PERSISTENT},
+    {"ExperimentalModeConfirmed", PERSISTENT},
     {"ExperimentalLongitudinalEnabled", PERSISTENT}, // WARNING: THIS MAY DISABLE AEB
     {"DisableUpdates", PERSISTENT},
     {"DisengageOnAccelerator", PERSISTENT},
@@ -148,6 +149,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"LiveTorqueCarParams", PERSISTENT},
     {"LiveTorqueParameters", PERSISTENT | DONT_LOG},
     {"NavDestination", CLEAR_ON_MANAGER_START | CLEAR_ON_IGNITION_OFF},
+    {"NavDestinationWaypoints", CLEAR_ON_MANAGER_START | CLEAR_ON_IGNITION_OFF},
     {"NavSettingTime24h", PERSISTENT},
     {"NavSettingLeftSide", PERSISTENT},
     {"NavdRender", PERSISTENT},
@@ -166,6 +168,7 @@ std::unordered_map<std::string, uint32_t> keys = {
     {"TermsVersion", PERSISTENT},
     {"Timezone", PERSISTENT},
     {"TrainingVersion", PERSISTENT},
+    {"UbloxAvailable", PERSISTENT},
     {"UpdateAvailable", CLEAR_ON_MANAGER_START},
     {"UpdateFailedCount", CLEAR_ON_MANAGER_START},
     {"UpdaterState", CLEAR_ON_MANAGER_START},
@@ -298,10 +301,13 @@ std::map<std::string, std::string> Params::readAll() {
 void Params::clearAll(ParamKeyType key_type) {
   FileLock file_lock(params_path + "/.lock");
 
-  std::string path;
-  for (auto &[key, type] : keys) {
-    if (type & key_type) {
-      unlink(getParamPath(key).c_str());
+  if (key_type == ALL) {
+    util::remove_files_in_dir(getParamPath());
+  } else {
+    for (auto &[key, type] : keys) {
+      if (type & key_type) {
+        unlink(getParamPath(key).c_str());
+      }
     }
   }
 

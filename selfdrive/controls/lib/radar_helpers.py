@@ -137,8 +137,8 @@ class Cluster():
       "vRel": float(lead_msg.v[0] - v_ego),
       "vLead": float(lead_msg.v[0]),
       "vLeadK": float(lead_msg.v[0]),
-      "aLeadK": float(0),
-      "aLeadTau": _LEAD_ACCEL_TAU,
+      "aLeadK": float(lead_msg.a[0]),
+      "aLeadTau": 0.3,  # FIXME: make this a separate named constant
       "fcw": False,
       "modelProb": float(lead_msg.prob),
       "radar": False,
@@ -151,7 +151,8 @@ class Cluster():
 
   def potential_low_speed_lead(self, v_ego):
     # stop for stuff in front of you and low speed, even without model confirmation
-    return abs(self.yRel) < 1.0 and (v_ego < v_ego_stationary) and self.dRel < 25
+    # Radar points closer than 0.75, are almost always glitches on toyota radars
+    return abs(self.yRel) < 1.0 and (v_ego < v_ego_stationary) and (0.75 < self.dRel < 25)
 
   def is_potential_fcw(self, model_prob):
     return model_prob > .9

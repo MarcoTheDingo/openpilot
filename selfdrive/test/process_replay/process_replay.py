@@ -417,6 +417,7 @@ def setup_env(simulation=False, CP=None, cfg=None, controlsState=None):
   params.put_bool("DisengageOnAccelerator", True)
   params.put_bool("WideCameraOnly", False)
   params.put_bool("DisableLogging", False)
+  params.put_bool("UbloxAvailable", True)
 
   os.environ["NO_RADAR_SLEEP"] = "1"
   os.environ["REPLAY"] = "1"
@@ -454,6 +455,9 @@ def setup_env(simulation=False, CP=None, cfg=None, controlsState=None):
     else:
       os.environ['SKIP_FW_QUERY'] = "1"
       os.environ['FINGERPRINT'] = CP.carFingerprint
+
+    if CP.openpilotLongitudinalControl:
+      params.put_bool("ExperimentalLongitudinalEnabled", True)
 
 
 def python_replay_process(cfg, lr, fingerprint=None):
