@@ -8,7 +8,7 @@ from functools import cached_property
 from pathlib import Path
 
 from cereal import log
-from common.gpio import gpio_set, gpio_init
+from common.gpio import gpio_set, gpio_init, get_irq_for_action
 from system.hardware.base import HardwareBase, ThermalConfig
 from system.hardware.tici import iwlist
 from system.hardware.tici.pins import GPIO
@@ -63,8 +63,14 @@ MM_MODEM_ACCESS_TECHNOLOGY_LTE = 1 << 14
 def sudo_write(val, path):
   os.system(f"sudo su -c 'echo {val} > {path}'")
 
-def affine_irq(val, irq):
-  sudo_write(str(val), f"/proc/irq/{irq}/smp_affinity_list")
+
+def affine_irq(val, action):
+  irq = get_irq_for_action(action)
+  if len(irq) == 0:
+    print(f"No IRQs found for '{action}'")
+    return
+  for i in irq:
+    sudo_write(str(val), f"/proc/irq/{i}/smp_affinity_list")
 
 
 class Tici(HardwareBase):
@@ -84,6 +90,16 @@ class Tici(HardwareBase):
   @cached_property
   def amplifier(self):
     return Amplifier()
+
+  @cached_property
+  def model(self):
+    with open("/sys/firmware/devicetree/base/model") as f:
+      model = f.read().strip('\x00')
+    model = model.split('comma ')[-1]
+    # TODO: remove this with AGNOS 7+
+    if model.startswith('Qualcomm'):
+      model = 'tici'
+    return model
 
   def get_os_version(self):
     with open("/VERSION") as f:
@@ -385,15 +401,22 @@ class Tici(HardwareBase):
 
   def set_screen_brightness(self, percentage):
     try:
+      with open("/sys/class/backlight/panel0-backlight/max_brightness") as f:
+        max_brightness = float(f.read().strip())
+
+      val = int(percentage * (max_brightness / 100.))
       with open("/sys/class/backlight/panel0-backlight/brightness", "w") as f:
-        f.write(str(int(percentage * 10.23)))
+        f.write(str(val))
     except Exception:
       pass
 
   def get_screen_brightness(self):
     try:
+      with open("/sys/class/backlight/panel0-backlight/max_brightness") as f:
+        max_brightness = float(f.read().strip())
+
       with open("/sys/class/backlight/panel0-backlight/brightness") as f:
-        return int(float(f.read()) / 10.23)
+        return int(float(f.read()) / (max_brightness / 100.))
     except Exception:
       return 0
 
@@ -401,7 +424,7 @@ class Tici(HardwareBase):
     # amplifier, 100mW at idle
     self.amplifier.set_global_shutdown(amp_disabled=powersave_enabled)
     if not powersave_enabled:
-      self.amplifier.initialize_configuration()
+      self.amplifier.initialize_configuration(self.model)
 
     # *** CPU config ***
 
@@ -415,11 +438,20 @@ class Tici(HardwareBase):
       sudo_write(gov, f'/sys/devices/system/cpu/cpufreq/policy{n}/scaling_governor')
 
     # *** IRQ config ***
-    affine_irq(5, 565)   # kgsl-3d0
-    affine_irq(4, 740)   # xhci-hcd:usb1 goes on the boardd core
-    affine_irq(4, 1069)  # xhci-hcd:usb3 goes on the boardd core
-    for irq in range(237, 246):
-      affine_irq(5, irq) # camerad
+
+    # GPU
+    affine_irq(5, "kgsl-3d0")
+
+    # boardd core
+    affine_irq(4, "spi_geni")         # SPI
+    affine_irq(4, "xhci-hcd:usb3")    # aux panda USB (or potentially anything else on USB)
+    if "tici" in self.model:
+      affine_irq(4, "xhci-hcd:usb1")  # internal panda USB
+
+    # camerad core
+    camera_irqs = ("cci", "cpas_camnoc", "cpas-cdm", "csid", "ife", "csid", "csid-lite", "ife-lite")
+    for n in camera_irqs:
+      affine_irq(5, n)
 
   def get_gpu_usage_percent(self):
     try:
@@ -429,17 +461,25 @@ class Tici(HardwareBase):
       return 0
 
   def initialize_hardware(self):
-    self.amplifier.initialize_configuration()
+    self.amplifier.initialize_configuration(self.model)
 
     # Allow thermald to write engagement status to kmsg
     os.system("sudo chmod a+w /dev/kmsg")
 
+    # TODO: remove the if once agnos 7 ships
+    # Turn off fan, turned on by the ABL
+    if os.path.exists('/sys/class/gpio/gpio49/'):
+      gpio_init(GPIO.SOM_ST_IO, True)
+      gpio_set(GPIO.SOM_ST_IO, 0)
+
     # *** IRQ config ***
 
     # move these off the default core
-    affine_irq(1, 7)    # msm_drm
-    affine_irq(1, 250)  # msm_vidc
-    affine_irq(1, 8)    # i2c_geni (sensord)
+    affine_irq(1, "msm_drm")
+    affine_irq(1, "msm_vidc")
+    affine_irq(1, "i2c_geni")
+
+    # mask off big cluster from default affinity
     sudo_write("f", "/proc/irq/default_smp_affinity")
 
     # *** GPU config ***
@@ -480,7 +520,7 @@ class Tici(HardwareBase):
 
     # blue prime config
     if sim_id.startswith('8901410'):
-      os.system('mmcli -m 0 --3gpp-set-initial-eps-bearer-settings="apn=Broadband"')
+      os.system('mmcli -m any --3gpp-set-initial-eps-bearer-settings="apn=Broadband"')
 
   def get_networks(self):
     r = {}

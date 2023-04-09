@@ -63,7 +63,7 @@ CAR_INFO: Dict[str, Union[SubaruCarInfo, List[SubaruCarInfo]]] = {
   ],
   CAR.IMPREZA_2020: [
     SubaruCarInfo("Subaru Impreza 2020-22"),
-    SubaruCarInfo("Subaru Crosstrek 2020-21"),
+    SubaruCarInfo("Subaru Crosstrek 2020-23"),
     SubaruCarInfo("Subaru XV 2020-21"),
   ],
   CAR.FORESTER: SubaruCarInfo("Subaru Forester 2019-21", "All"),
@@ -104,6 +104,7 @@ FW_VERSIONS = {
       b'\000\000e~\037@ \'',
       b'\x00\x00e@\x1f@ $',
       b'\x00\x00d\xb9\x00\x00\x00\x00',
+      b'\x00\x00e@\x00\x00\x00\x00',
     ],
     (Ecu.engine, 0x7e0, None): [
       b'\xbb,\xa0t\a',
@@ -111,33 +112,38 @@ FW_VERSIONS = {
       b'\xf1\x82\xbb,\xa0t\a',
       b'\xf1\x82\xd9,\xa0@\a',
       b'\xf1\x82\xd1,\xa0q\x07',
+      b'\xd1,\xa0q\x07',
     ],
     (Ecu.transmission, 0x7e1, None): [
       b'\x00\xfe\xf7\x00\x00',
       b'\001\xfe\xf9\000\000',
       b'\x01\xfe\xf7\x00\x00',
+      b'\x01\xfe\xfa\x00\x00',
     ],
   },
   CAR.LEGACY: {
     (Ecu.abs, 0x7b0, None): [
       b'\xa1\\  x04\x01',
-      b'\xa1  \x03\x03'
+      b'\xa1  \x03\x03',
+      b'\xa1  \x02\x01',
     ],
     (Ecu.eps, 0x746, None): [
       b'\x9b\xc0\x11\x00',
-      b'\x9b\xc0\x11\x02'
+      b'\x9b\xc0\x11\x02',
     ],
     (Ecu.fwdCamera, 0x787, None): [
       b'\x00\x00e\x80\x00\x1f@ \x19\x00',
-      b'\x00\x00e\x9a\x00\x00\x00\x00\x00\x00'
+      b'\x00\x00e\x9a\x00\x00\x00\x00\x00\x00',
     ],
     (Ecu.engine, 0x7e0, None): [
       b'\xde\"a0\x07',
-      b'\xe2"aq\x07'
+      b'\xe2"aq\x07',
+      b'\xde,\xa0@\x07',
     ],
     (Ecu.transmission, 0x7e1, None): [
       b'\xa5\xf6\x05@\x00',
-      b'\xa7\xf6\x04@\x00'
+      b'\xa7\xf6\x04@\x00',
+      b'\xa5\xfe\xc7@\x00',
     ],
   },
   CAR.IMPREZA: {
@@ -190,6 +196,7 @@ FW_VERSIONS = {
       b'\xaa!dt\a',
       b'\xc5!ar\a',
       b'\xbe!as\a',
+      b'\xc5!as\x07',
       b'\xc5!ds\a',
       b'\xc5!`s\a',
       b'\xaa!au\a',
@@ -198,6 +205,7 @@ FW_VERSIONS = {
       b'\xc5!dr\x07',
       b'\xaa!aw\x07',
       b'\xaa!av\x07',
+      b'\xaa\x01bt\x07',
     ],
     (Ecu.transmission, 0x7e1, None): [
       b'\xe3\xe5\x46\x31\x00',
@@ -213,6 +221,7 @@ FW_VERSIONS = {
       b'\xe4\xf5\002\000\000',
       b'\xe3\xd0\x081\x00',
       b'\xe3\xf5\x06\x00\x00',
+      b'\xe3\xd5\x161\x00',
     ],
   },
   CAR.IMPREZA_2020: {
@@ -228,12 +237,14 @@ FW_VERSIONS = {
       b'\x9a\xc0\000\000',
       b'\n\xc0\004\000',
       b'\x9a\xc0\x04\x00',
+      b'\n\xc0\x04\x01',
     ],
     (Ecu.fwdCamera, 0x787, None): [
       b'\000\000eb\037@ \"',
       b'\000\000e\x8f\037@ )',
       b'\x00\x00eq\x1f@ "',
       b'\x00\x00eq\x00\x00\x00\x00',
+      b'\x00\x00e\x8f\x00\x00\x00\x00',
     ],
     (Ecu.engine, 0x7e0, None): [
       b'\xca!ap\a',
@@ -243,6 +254,8 @@ FW_VERSIONS = {
       b'\xcc!fp\a',
       b'\xca!f@\x07',
       b'\xca!fp\x07',
+      b'\xf3"f@\x07',
+      b'\xe6!fp\x07',
     ],
     (Ecu.transmission, 0x7e1, None): [
       b'\xe6\xf5\004\000\000',
@@ -251,6 +264,8 @@ FW_VERSIONS = {
       b'\xe7\xf5D0\000',
       b'\xf1\x00\xd7\x10@',
       b'\xe6\xf5D0\x00',
+      b'\xe9\xf6F0\x00',
+      b'\xe9\xf5B0\x00',
     ],
   },
   CAR.FORESTER: {
@@ -260,9 +275,11 @@ FW_VERSIONS = {
       b'\xa3 \031\024\000',
       b'\xa3  \x14\x01',
       b'\xf1\x00\xbb\r\x05',
+      b'\xa3 \x18&\x00',
     ],
     (Ecu.eps, 0x746, None): [
       b'\x8d\xc0\x04\x00',
+      b'\x8d\xc0\x00\x00',
     ],
     (Ecu.fwdCamera, 0x787, None): [
       b'\x00\x00e!\x1f@ \x11',
@@ -279,6 +296,7 @@ FW_VERSIONS = {
       b'\xcb\"`p\a',
       b'\xf1\x00\xa2\x10\n',
       b'\xcf"`p\x07',
+      b'\xb6\xa2`A\x07',
     ],
     (Ecu.transmission, 0x7e1, None): [
       b'\032\xf6B0\000',
@@ -286,6 +304,7 @@ FW_VERSIONS = {
       b'\032\xf6b`\000',
       b'\x1a\xf6B`\x00',
       b'\x1a\xf6b0\x00',
+      b'\x1a\xe6B1\x00',
     ],
   },
   CAR.FORESTER_PREGLOBAL: {
@@ -454,6 +473,7 @@ FW_VERSIONS = {
       b'\xa1  \x08\x02',
       b'\xa1 \x06\x02',
       b'\xa1  \x08\x00',
+      b'\xa1 "\t\x00',
     ],
     (Ecu.eps, 0x746, None): [
       b'\x9b\xc0\x10\x00',
@@ -475,6 +495,7 @@ FW_VERSIONS = {
       b'\xe2"`p\x07',
       b'\xf1\x82\xe2,\xa0@\x07',
       b'\xbc"`q\x07',
+      b'\xe3,\xa0@\x07',
     ],
     (Ecu.transmission, 0x7e1, None): [
       b'\xa5\xfe\xf7@\x00',
