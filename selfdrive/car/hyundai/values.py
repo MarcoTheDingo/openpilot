@@ -42,7 +42,7 @@ class CarControllerParams:
 
     # these cars have significantly more torque than most HKG; limit to 70% of max
     elif CP.flags & HyundaiFlags.ALT_LIMITS:
-      self.STEER_MAX = 270
+      self.STEER_MAX = 384 if CP.carFingerprint in (CAR.GENESIS_G70_1ST_GEN_FL) else 270
       self.STEER_DELTA_UP = 2
       self.STEER_DELTA_DOWN = 3
 
@@ -517,6 +517,13 @@ class CAR(Platforms):
     ],
     GENESIS_G70.specs,
     flags=HyundaiFlags.MANDO_RADAR,
+  )
+  GENESIS_G70_1ST_GEN_FL = HyundaiPlatformConfig(
+    [
+      HyundaiCarDocs("GENESIS G70 1ST GEN FACELIFT", "All", car_parts=CarParts.common([CarHarness.hyundai_l])),
+    ],
+    CarSpecs(mass=1840, wheelbase=2.835, steerRatio=13.3 * 1.15), # 15% higher works well
+    flags=HyundaiFlags.ALT_LIMITS | HyundaiFlags.CAMERA_SCC | HyundaiFlags.CHECKSUM_CRC8,
   )
   GENESIS_GV70_1ST_GEN = HyundaiCanFDPlatformConfig(
     [
